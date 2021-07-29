@@ -2,10 +2,10 @@
 
 /* global describe, before, it */
 
-var path = require('path')
-var assert = require('yeoman-generator').assert
-var helpers = require('yeoman-generator').test
-var os = require('os')
+const path = require('path')
+const assert = require('yeoman-generator').assert
+const helpers = require('yeoman-generator').test
+const os = require('os')
 
 describe('hubot:app', function () {
   before(function (done) {

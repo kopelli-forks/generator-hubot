@@ -253,7 +253,7 @@ const HubotGenerator = yeoman.generators.Base.extend({
       packages.push('hubot-' + this.botAdapter)
     }
 
-    this.npmInstall(packages, {'save': true})
+    this.npmInstall(packages, { save: true })
 
     this.log(hubotEndSay())
   }
