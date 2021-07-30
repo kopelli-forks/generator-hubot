@@ -1,8 +1,9 @@
 'use strict'
 
 const npmName = require('npm-name')
-const yeoman = require('yeoman-generator')
+const Generator = require('yeoman-generator')
 const chalk = require('chalk')
+const _ = require('lodash')
 
 function hubotStartSay () {
   return '                     _____________________________  ' + '\n' +
@@ -40,40 +41,9 @@ function hubotEndSay () {
           '\n'
 }
 
-const HubotGenerator = yeoman.generators.Base.extend({
-
-  determineDefaultOwner: function () {
-    let userName
-    let userEmail
-
-    if (typeof (this.user.git.name) === 'function') {
-      userName = this.user.git.name()
-    } else {
-      userName = this.user.git.name
-    }
-
-    if (typeof (this.user.git.email) === 'function') {
-      userEmail = this.user.git.email()
-    } else {
-      userEmail = this.user.git.email
-    }
-
-    if (userName && userEmail) {
-      return userName + ' <' + userEmail + '>'
-    } else {
-      return 'User <user@example.com>'
-    }
-  },
-
-  determineDefaultName: function () {
-    return this._.slugify(this.appname)
-  },
-
-  defaultAdapter: 'campfire',
-  defaultDescription: 'A simple helpful robot for your Company',
-
-  constructor: function () {
-    yeoman.generators.Base.apply(this, arguments)
+module.exports = class extends Generator {
+  constructor (args, opts) {
+    super(args, opts)
 
     // FIXME add documentation to these
     this.option('owner', {
@@ -123,9 +93,38 @@ const HubotGenerator = yeoman.generators.Base.extend({
     if (this.options.adapter === true) {
       this.env.error('Missing adapter name. Make sure to specify it like --adapter=<adapter>')
     }
-  },
 
-  initializing: function () {
+    this.defaultAdapter = 'campfire'
+    this.defaultDescription = 'A simple helpful robot for your Company'
+    this.determineDefaultName = function () {
+      return _.trim(_.kebabCase(_.deburr(this.appname).replace(/[^\w\s-]/g, '-').toLowerCase()), '-')
+    }
+
+    this.determineDefaultOwner = function () {
+      let userName
+      let userEmail
+
+      if (typeof (this.user.git.name) === 'function') {
+        userName = this.user.git.name()
+      } else {
+        userName = this.user.git.name
+      }
+
+      if (typeof (this.user.git.email) === 'function') {
+        userEmail = this.user.git.email()
+      } else {
+        userEmail = this.user.git.email
+      }
+
+      if (userName && userEmail) {
+        return userName + ' <' + userEmail + '>'
+      } else {
+        return 'User <user@example.com>'
+      }
+    }
+  }
+
+  initializing () {
     this.pkg = require('../../package.json')
 
     this.externalScripts = [
@@ -134,127 +133,99 @@ const HubotGenerator = yeoman.generators.Base.extend({
       'hubot-redis-brain',
       'hubot-rules'
     ]
-  },
+  }
 
-  prompting: {
-    askFor: function () {
-      const done = this.async()
-      const botOwner = this.determineDefaultOwner()
+  async prompting () {
+    const prompts = []
+    if (!this.options.owner) {
+      prompts.push({
+        name: 'botOwner',
+        message: 'Owner',
+        default: this.determineDefaultOwner()
+      })
+    }
 
-      const prompts = []
-      if (!this.options.owner) {
-        prompts.push({
-          name: 'botOwner',
-          message: 'Owner',
-          default: botOwner
-        })
-      }
+    if (!this.options.name) {
+      prompts.push({
+        name: 'botName',
+        message: 'Bot name',
+        default: this.determineDefaultName()
+      })
+    }
 
-      this.log(hubotStartSay())
-      this.prompt(prompts, function (props) {
-        this.botOwner = this.options.owner || props.botOwner
+    if (!this.options.description) {
+      prompts.push({
+        name: 'botDescription',
+        message: 'Description',
+        default: this.defaultDescription
+      })
+    }
 
-        done()
-      }.bind(this))
-    },
-
-    askForBotNameAndDescription: function () {
-      const done = this.async()
-      const botName = this.determineDefaultName()
-
-      const prompts = []
-
-      if (!this.options.name) {
-        prompts.push({
-          name: 'botName',
-          message: 'Bot name',
-          default: botName
-        })
-      }
-
-      if (!this.options.description) {
-        prompts.push({
-          name: 'botDescription',
-          message: 'Description',
-          default: this.defaultDescription
-        })
-      }
-
-      this.prompt(prompts, function (props) {
-        this.botName = this.options.name || props.botName
-        this.botDescription = this.options.description || props.botDescription
-
-        done()
-      }.bind(this))
-    },
-
-    askForBotAdapter: function () {
-      const done = this.async()
-
-      const prompts = []
-      // FIXME validate argument like we do when prompting
-      if (!this.options.adapter) {
-        prompts.push({
-          name: 'botAdapter',
-          message: 'Bot adapter',
-          default: this.defaultAdapter,
-          validate: function (botAdapter) {
-            const done = this.async()
-
-            if (botAdapter === 'campfire') {
-              done(null, true)
-              return
-            }
-
-            const name = 'hubot-' + botAdapter
-            npmName(name).then(unavailable => {
-              if (unavailable) {
-                done(`Cannot find the adapter '${name}' on NPM. Try again?`)
-                return
-              }
-              done(null, true)
-            })
+    if (!this.options.adapter) {
+      prompts.push({
+        name: 'botAdapter',
+        message: 'Bot adapter',
+        default: this.defaultAdapter,
+        validate: async function (botAdapter) {
+          const name = `hubot-${botAdapter}`
+          const unavailable = await npmName(name)
+          if (unavailable) {
+            throw new Error(`Cannot find the adapter '${name}' on NPM. Try again?`)
           }
-        })
-      }
-
-      this.prompt(prompts, function (props) {
-        this.botAdapter = this.options.adapter || props.botAdapter
-
-        done()
-      }.bind(this))
-    }
-  },
-
-  writing: {
-    app: function () {
-      this.mkdir('bin')
-      this.copy('bin/hubot', 'bin/hubot')
-      this.copy('bin/hubot.cmd', 'bin/hubot.cmd')
-
-      this.template('Procfile', 'Procfile')
-      this.template('README.md', 'README.md')
-
-      this.write('external-scripts.json', JSON.stringify(this.externalScripts, undefined, 2))
-
-      this.copy('gitignore', '.gitignore')
-      this.template('_package.json', 'package.json')
-
-      this.directory('scripts', 'scripts')
-    }
-  },
-
-  end: function () {
-    const packages = ['hubot'].concat(this.externalScripts).map(name => `${name}@latest`)
-
-    if (this.botAdapter !== 'campfire') {
-      packages.push('hubot-' + this.botAdapter)
+        }
+      })
     }
 
-    this.npmInstall(packages, { save: true })
+    this.log(hubotStartSay())
+    const answers = await this.prompt(prompts)
+    this.botOwner = this.options.owner || answers.botOwner
+    this.botName = this.options.name || answers.botName
+    this.botDescription = this.options.description || answers.botDescription
+    this.botAdapter = this.options.adapter || answers.botAdapter
+  }
 
+  // configuring() {}
+  // default() {}
+
+  writing () {
+    const templateTokens = {
+      botName: this.botName,
+      botOwner: this.botOwner,
+      botDescription: this.botDescription,
+      botAdapter: this.botAdapter
+    }
+    const copyTpl = (from, to) => {
+      this.fs.copyTpl(
+        this.templatePath(from),
+        this.destinationPath(to),
+        templateTokens
+      )
+    }
+
+    copyTpl('bin/hubot', 'bin/hubot')
+    copyTpl('bin/hubot.cmd', 'bin/hubot.cmd')
+    copyTpl('Procfile', 'Procfile')
+    copyTpl('README.md', 'README.md')
+    this.fs.write(this.destinationPath('external-scripts.json'), JSON.stringify(this.externalScripts, undefined, 2))
+    copyTpl('gitignore', '.gitignore')
+    copyTpl('_package.json', 'package.json')
+    this.fs.copy(this.templatePath('scripts/*'), this.destinationPath('scripts'), { globOptions: { } })
+
+    // NPM Installs are done automatically, so we need to augment package.json first.
+    const dependencyAugmentation = {
+      dependencies: { }
+    }
+    const packages = ['hubot'].concat(this.externalScripts)
+    packages.push(`hubot-${this.botAdapter}`)
+    packages.forEach(pkg => {
+      dependencyAugmentation[pkg] = `${pkg}@latest`
+    })
+    this.fs.extendJSON(this.destinationPath('package.json'), dependencyAugmentation)
+  }
+
+  // conflicts
+  // install
+  end () {
     this.log(hubotEndSay())
   }
-})
-
-module.exports = HubotGenerator
+}

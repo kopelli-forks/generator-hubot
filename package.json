@@ -35,11 +35,13 @@
   "dependencies": {
     "chalk": "^4.1.1",
     "npm-name": "^6.0.1",
-    "yeoman-generator": "^0.17.0"
+    "yeoman-generator": "^5.4.0"
   },
   "devDependencies": {
     "mocha": "^9.0.3",
     "semantic-release": "^15.9.6",
-    "standard": "^16.0.3"
+    "standard": "^16.0.3",
+    "yeoman-assert": "^3.1.1",
+    "yeoman-test": "^6.2.0"
   }
 }

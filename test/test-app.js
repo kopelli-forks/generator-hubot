@@ -3,23 +3,22 @@
 /* global describe, before, it */
 
 const path = require('path')
-const assert = require('yeoman-generator').assert
-const helpers = require('yeoman-generator').test
-const os = require('os')
+const assert = require('yeoman-assert')
+const helpers = require('yeoman-test')
 
 describe('hubot:app', function () {
+  let tempDir
   before(function (done) {
     helpers.run(path.join(__dirname, '../generators/app'))
-      .inDir(path.join(os.tmpdir(), './temp-test'))
-      .withOptions({ 'skip-install': true })
-      .withPrompt({
+      .inTmpDir(dir => { tempDir = dir })
+      .withPrompts({
         someOption: true
       })
       .on('end', done)
   })
 
   it('creates files', function () {
-    assert.file([
+    const files = [
       'bin/hubot',
       'bin/hubot.cmd',
       'Procfile',
@@ -28,6 +27,7 @@ describe('hubot:app', function () {
       '.gitignore',
       'package.json',
       'scripts/example.js'
-    ])
+    ]
+    assert.file(files.map(f => path.join(tempDir, f)))
   })
 })
