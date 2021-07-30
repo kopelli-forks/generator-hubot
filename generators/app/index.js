@@ -1,8 +1,8 @@
 'use strict'
 
+const npmName = require('npm-name')
 const yeoman = require('yeoman-generator')
 const chalk = require('chalk')
-const npmName = require('npm-name')
 
 function hubotStartSay () {
   return '                     _____________________________  ' + '\n' +
@@ -207,13 +207,11 @@ const HubotGenerator = yeoman.generators.Base.extend({
             }
 
             const name = 'hubot-' + botAdapter
-            npmName(name, function (error, unavailable) {
-              if (error) throw error
+            npmName(name).then(unavailable => {
               if (unavailable) {
-                done("Can't find that adapter on NPM, try again?")
+                done(`Cannot find the adapter '${name}' on NPM. Try again?`)
                 return
               }
-
               done(null, true)
             })
           }

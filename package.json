@@ -34,7 +34,7 @@
   ],
   "dependencies": {
     "chalk": "^4.1.1",
-    "npm-name": "^1.0.1",
+    "npm-name": "^6.0.1",
     "yeoman-generator": "^0.17.0"
   },
   "devDependencies": {
