@@ -133,7 +133,6 @@ module.exports = class extends Generator {
 
     this.externalScripts = [
       'hubot-diagnostics',
-      'hubot-help',
       'hubot-redis-brain',
       'hubot-rules'
     ]
@@ -207,13 +206,13 @@ module.exports = class extends Generator {
       )
     }
 
+    copyTpl('_package.json', 'package.json')
+    copyTpl('gitignore', '.gitignore')
+    copyTpl('README.md', 'README.md')
+    copyTpl('Procfile', 'Procfile')
+    this.fs.write(this.destinationPath('external-scripts.json'), JSON.stringify(this.externalScripts, undefined, 2))
     copyTpl('bin/hubot', 'bin/hubot')
     copyTpl('bin/hubot.cmd', 'bin/hubot.cmd')
-    copyTpl('Procfile', 'Procfile')
-    copyTpl('README.md', 'README.md')
-    this.fs.write(this.destinationPath('external-scripts.json'), JSON.stringify(this.externalScripts, undefined, 2))
-    copyTpl('gitignore', '.gitignore')
-    copyTpl('_package.json', 'package.json')
     this.fs.copy(this.templatePath('scripts/*'), this.destinationPath('scripts'), { globOptions: { } })
 
     // NPM Installs are done automatically, so we need to augment package.json first.
