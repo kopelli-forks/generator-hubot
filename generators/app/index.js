@@ -220,9 +220,11 @@ module.exports = class extends Generator {
       dependencies: { }
     }
     const packages = ['hubot'].concat(this.externalScripts)
-    packages.push(`hubot-${this.botAdapter}`)
+    if (this.botAdapter !== 'shell') {
+      packages.push(`hubot-${this.botAdapter}`)
+    }
     packages.forEach(pkg => {
-      dependencyAugmentation[pkg] = `${pkg}@latest`
+      dependencyAugmentation.dependencies[pkg] = '*'
     })
     this.fs.extendJSON(this.destinationPath('package.json'), dependencyAugmentation)
   }
