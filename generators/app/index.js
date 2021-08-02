@@ -46,6 +46,36 @@ module.exports = class extends Generator {
   constructor (args, opts) {
     super(args, opts, { unique: 'namespace', customInstallTask: true })
 
+    // Instance properties/methods
+    this.defaultAdapter = 'shell'
+    this.defaultDescription = 'A simple helpful robot for your Company'
+    this.determineDefaultName = function () {
+      return _.trim(_.kebabCase(_.deburr(this.appname).replace(/[^\w\s-]/g, '-').toLowerCase()), '-')
+    }
+
+    this.determineDefaultOwner = function () {
+      let userName
+      let userEmail
+
+      if (typeof (this.user.git.name) === 'function') {
+        userName = this.user.git.name()
+      } else {
+        userName = this.user.git.name
+      }
+
+      if (typeof (this.user.git.email) === 'function') {
+        userEmail = this.user.git.email()
+      } else {
+        userEmail = this.user.git.email
+      }
+
+      if (userName && userEmail) {
+        return userName + ' <' + userEmail + '>'
+      } else {
+        return 'User <user@example.com>'
+      }
+    }
+
     // FIXME add documentation to these
     this.option('owner', {
       desc: 'Name and email of the owner of new bot (ie Example <user@example.com>)',
@@ -95,34 +125,6 @@ module.exports = class extends Generator {
       this.env.error('Missing adapter name. Make sure to specify it like --adapter=<adapter>')
     }
 
-    this.defaultAdapter = 'campfire'
-    this.defaultDescription = 'A simple helpful robot for your Company'
-    this.determineDefaultName = function () {
-      return _.trim(_.kebabCase(_.deburr(this.appname).replace(/[^\w\s-]/g, '-').toLowerCase()), '-')
-    }
-
-    this.determineDefaultOwner = function () {
-      let userName
-      let userEmail
-
-      if (typeof (this.user.git.name) === 'function') {
-        userName = this.user.git.name()
-      } else {
-        userName = this.user.git.name
-      }
-
-      if (typeof (this.user.git.email) === 'function') {
-        userEmail = this.user.git.email()
-      } else {
-        userEmail = this.user.git.email
-      }
-
-      if (userName && userEmail) {
-        return userName + ' <' + userEmail + '>'
-      } else {
-        return 'User <user@example.com>'
-      }
-    }
     this.options.nodePackageManager = 'npm'
   }
 
