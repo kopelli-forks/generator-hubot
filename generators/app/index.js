@@ -138,12 +138,13 @@ module.exports = class extends Generator {
   }
 
   async prompting () {
+    const defaultOwner = this.determineDefaultOwner()
     const prompts = []
     if (!this.options.owner) {
       prompts.push({
         name: 'botOwner',
         message: 'Owner',
-        default: this.determineDefaultOwner()
+        default: defaultOwner
       })
     }
 
