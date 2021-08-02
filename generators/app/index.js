@@ -4,6 +4,7 @@ const npmName = require('npm-name')
 const Generator = require('yeoman-generator')
 const chalk = require('chalk')
 const _ = require('lodash')
+_.extend(Generator.prototype, require('yeoman-generator/lib/actions/install'))
 
 function hubotStartSay () {
   return '                     _____________________________  ' + '\n' +
@@ -43,7 +44,7 @@ function hubotEndSay () {
 
 module.exports = class extends Generator {
   constructor (args, opts) {
-    super(args, opts)
+    super(args, opts, { unique: 'namespace', customInstallTask: true })
 
     // FIXME add documentation to these
     this.option('owner', {
@@ -122,6 +123,7 @@ module.exports = class extends Generator {
         return 'User <user@example.com>'
       }
     }
+    this.options.nodePackageManager = 'npm'
   }
 
   initializing () {
@@ -224,7 +226,10 @@ module.exports = class extends Generator {
   }
 
   // conflicts
-  // install
+  install () {
+    this.scheduleInstallTask('npm', null, { fund: false, audit: false })
+  }
+
   end () {
     this.log(hubotEndSay())
   }
